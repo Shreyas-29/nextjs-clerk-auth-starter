@@ -1,4 +1,4 @@
-This is Next.js 14 with Clerk authentication system with custom your own UI using Shadcn UI and Tailwind CSS
+This is Next.js 14 with Clerk authentication system with custom UI using Shadcn UI and Tailwind CSS
 
 ## Getting Started
 
