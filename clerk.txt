@@ -1,0 +1,895 @@
+import { clerkMiddleware } from "@clerk/nextjs/server";
+
+export default clerkMiddleware();
+
+export const config = {
+    matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
+}; this is my simple middleware.ts file in nextjs so i want here to protect these route: '/dashboard' and all next to dashboard ie. /dashboard/analytics, /dashboard/settings like that, and also prevent the logged in users not able go to /signin and /signup
+To achieve this in your middleware, you need to configure the matcher to protect the /dashboard route and all its sub-routes, as well as prevent logged-in users from accessing the /signin and /signup routes.
+
+Here's how you can modify your middleware.ts file:
+
+typescript
+import { clerkMiddleware } from "@clerk/nextjs/server";
+
+export default clerkMiddleware({
+    publicRoutes: (req) => {
+        const url = req.nextUrl.pathname;
+        return !url.startsWith("/dashboard") && !url.startsWith("/signin") && !url.startsWith("/signup");
+    },
+});
+
+export const config = {
+    matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)', '/dashboard(.*)'],
+};
+1, 2
+
+In this configuration:
+
+The publicRoutes function checks the request URL and ensures that it does not start with /dashboard, /signin, or /signup.
+The matcher includes /dashboard and all its sub-routes using the /dashboard(.*) pattern.
+This setup ensures that the /dashboard route and its sub-routes are protected, and logged-in users are prevented from accessing the /signin and /signup routes.
+
+Sources
+Next.js Quickstart
+QuickstartsFull StackNext.js
+but here see i want to keep the home page ie. '/' route to be also public to anyone
+To make the home page (/) public while protecting the /dashboard routes and preventing logged-in users from accessing the /signin and /signup routes, you can update the publicRoutes function accordingly.
+
+Here's the updated middleware.ts file:
+
+typescript
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+
+const isPublicRoute = createRouteMatcher(["/", "/signin", "/signup"]);
+
+export default clerkMiddleware((auth, req) => {
+    const url = req.nextUrl.pathname;
+
+    if (!isPublicRoute(req) && url.startsWith("/dashboard")) {
+        auth().protect();
+    }
+
+    if (auth() && (url.startsWith("/signin") || url.startsWith("/signup"))) {
+        return NextResponse.redirect("/");
+    }
+});
+
+export const config = {
+    matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
+};
+In this configuration:
+
+The isPublicRoute function matches the home page (/), /signin, and /signup routes.
+If the route is not public and starts with /dashboard, it is protected.
+If the user is authenticated and the route starts with /signin or /signup, they are redirected to the home page.
+This setup ensures that the home page is public, the /dashboard route and its sub-routes are protected, and logged-in users are prevented from accessing the /signin and /signup routes.
+
+1, 2
+
+thank you soo much
+You're welcome! If you have any more questions or need further assistance, feel free to ask. Happy coding!
+
+now, tell me how do i integrate custom email and password with my nextjs and tailwindcss ui
+To integrate custom email and password authentication with your Next.js and TailwindCSS UI using Clerk, follow these steps:
+
+Step 1: Enable Email and Password Authentication
+Navigate to the Clerk Dashboard.
+Go to User & Authentication > Email, Phone, and Username.
+Ensure that Email address is required and Password is enabled 1.
+Step 2: Create the Email/Password Sign-Up Flow
+Create a custom sign-up form that collects the user's email and password, sends a verification code to the email, and then verifies the code.
+
+Here's an example using Next.js with TailwindCSS:
+
+typescript
+// app/sign-up/page.tsx
+'use client';
+import * as React from 'react';
+import { useSignUp } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
+
+export default function SignUpPage() {
+  const { isLoaded, signUp, setActive } = useSignUp();
+  const [emailAddress, setEmailAddress] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [verifying, setVerifying] = React.useState(false);
+  const [code, setCode] = React.useState('');
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLoaded) return;
+
+    try {
+      await signUp.create({
+        emailAddress,
+        password,
+      });
+
+      await signUp.prepareEmailAddressVerification({
+        strategy: 'email_code',
+      });
+
+      setVerifying(true);
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2));
+    }
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLoaded) return;
+
+    try {
+      const completeSignUp = await signUp.attemptEmailAddressVerification({
+        code,
+      });
+
+      if (completeSignUp.status === 'complete') {
+        await setActive({ session: completeSignUp.createdSessionId });
+        router.push('/');
+      } else {
+        console.error(JSON.stringify(completeSignUp, null, 2));
+      }
+    } catch (err: any) {
+      console.error('Error:', JSON.stringify(err, null, 2));
+    }
+  };
+
+  return verifying ? (
+    <div className="flex flex-col items-center">
+      <h1 className="text-2xl font-bold">Verify your email</h1>
+      <form onSubmit={handleVerify} className="w-full max-w-sm">
+        <label className="block text-sm font-medium text-gray-700" htmlFor="code">Enter your verification code</label>
+        <input
+          value={code}
+          id="code"
+          name="code"
+          onChange={(e) => setCode(e.target.value)}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        />
+        <button type="submit" className="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded-md">Verify</button>
+      </form>
+    </div>
+  ) : (
+    <div className="flex flex-col items-center">
+      <h1 className="text-2xl font-bold">Sign up</h1>
+      <form onSubmit={handleSubmit} className="w-full max-w-sm">
+        <div>
+          <label className="block text-sm font-medium text-gray-700" htmlFor="email">Enter email address</label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            value={emailAddress}
+            onChange={(e) => setEmailAddress(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700" htmlFor="password">Enter password</label>
+          <input
+            id="password"
+            type="password"
+            name="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+        <div className="mt-4">
+          <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-md">Next</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+Step 3: Create the Email/Password Sign-In Flow
+Create a custom sign-in form that collects the user's email and password and signs them in.
+
+Here's an example:
+
+typescript
+// app/sign-in/page.tsx
+'use client';
+import * as React from 'react';
+import { useSignIn } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
+
+export default function SignInPage() {
+  const { isLoaded, signIn, setActive } = useSignIn();
+  const [emailAddress, setEmailAddress] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLoaded) return;
+
+    try {
+      const signInAttempt = await signIn.create({
+        identifier: emailAddress,
+        password,
+      });
+
+      if (signInAttempt.status === 'complete') {
+        await setActive({ session: signInAttempt.createdSessionId });
+        router.push('/');
+      } else {
+        console.error(JSON.stringify(signInAttempt, null, 2));
+      }
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2));
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center">
+      <h1 className="text-2xl font-bold">Sign in</h1>
+      <form onSubmit={handleSubmit} className="w-full max-w-sm">
+        <div>
+          <label className="block text-sm font-medium text-gray-700" htmlFor="email">Enter email address</label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            value={emailAddress}
+            onChange={(e) => setEmailAddress(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700" htmlFor="password">Enter password</label>
+          <input
+            id="password"
+            type="password"
+            name="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+        <div className="mt-4">
+          <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-md">Sign in</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+This setup will allow you to implement custom email and password authentication flows in your Next.js application using Clerk, with a TailwindCSS UI.
+
+Sources
+Build a custom email/password authentication flow
+Custom FlowsAuthenticationEmail & Password
+hurray!!! i just completed the authentiction flow, now i am also getting the user on home page, now see using webhook i want to store this user to my database as well i am using prisma and mongodb i have initited prisma in lib/db.ts file and also inited prisma, now give me that user model and other verifications models and how do i store this created user in mongodb
+To store the created user in MongoDB using Prisma, you'll need to set up a Prisma model for the user and then handle the webhook event to store the user in your MongoDB database. Here are the steps to achieve this:
+
+Step 1: Define Prisma User Model
+In your prisma/schema.prisma file, define the User model. You can adjust the fields based on your requirements:
+
+prisma
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  clerkUserId    String   @unique
+  email          String   @unique
+  firstName      String?
+  lastName       String?
+  profileImageUrl String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+Step 2: Initialize Prisma Client
+Ensure your Prisma client is initialized properly in lib/db.ts:
+
+typescript
+// lib/db.ts
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+export default prisma;
+Step 3: Handle Webhook Event
+Create an API route to handle the webhook event. This route will be responsible for storing the user data in MongoDB using Prisma.
+
+Here's an example of how to handle the user.created event:
+
+typescript
+// pages/api/webhooks/clerk.ts
+import { NextApiRequest, NextApiResponse } from 'next';
+import prisma from '../../../lib/db';
+import { Webhook } from 'svix';
+import { buffer } from 'micro';
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  const payload = (await buffer(req)).toString();
+  const headers = req.headers;
+  const endpointSecret = process.env.SVIX_ENDPOINT_SECRET;
+
+  const wh = new Webhook(endpointSecret);
+
+  let evt;
+  try {
+    evt = wh.verify(payload, headers);
+  } catch (err) {
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  const eventType = evt.type;
+  const eventData = evt.data;
+
+  if (eventType === 'user.created') {
+    const { id, email_addresses, first_name, last_name, profile_image_url } = eventData;
+
+    try {
+      await prisma.user.create({
+        data: {
+          clerkUserId: id,
+          email: email_addresses[0].email_address,
+          firstName: first_name,
+          lastName: last_name,
+          profileImageUrl: profile_image_url,
+        },
+      });
+      res.status(201).json({ message: 'User created in database' });
+    } catch (error) {
+      console.error('Error creating user:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  } else {
+    res.status(400).json({ error: 'Unhandled event type' });
+  }
+};
+
+export default handler;
+Step 4: Set Up Webhook in Clerk Dashboard
+Go to the Clerk Dashboard.
+Navigate to Webhooks and create a new webhook endpoint.
+Set the endpoint URL to your newly created API route, e.g., https://your-domain.com/api/webhooks/clerk.
+Select the user.created event.
+Environment Variables
+Ensure you have the necessary environment variables set up in your .env file:
+
+DATABASE_URL="your-mongodb-connection-string"
+SVIX_ENDPOINT_SECRET="your-svix-endpoint-secret"
+Verify and Protect Your Webhook
+Make sure to secure your webhook endpoint by verifying the request signature to ensure it's coming from Clerk. Clerk uses Svix to send webhooks, and you can verify these webhooks following the examples provided in the Webhook overview documentation 1.
+
+This setup should allow you to handle the user.created event and store the user data in your MongoDB database using Prisma.
+
+Sources
+Webhooks overview
+IntegrationsWebhooksOverview
+see intead of webhook, it is very critical to get the proper request, intead will just simply make a /auth-callback page in app dir then on that page will trigger the auth status if the user is logged in or like created using getuser or something other function by clerk then will check if that user id matches with clerk user id, if not then will create a new user in db using "use server"-> "use server";
+
+import { db } from "@/lib/db";
+import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+
+const getAuthStatus = async () => {
+    
+    const { getUser } = getKindeServerSession();
+
+    const user = await getUser();
+
+    if (!user?.id || !user?.email) {
+        throw new Error("User not authenticated");
+    }
+
+    const existingUser = await db.user.findFirst({
+        where: {
+            id: user.id,
+        },
+    });
+
+    console.log("existingUser", existingUser);
+
+    if (!existingUser) {
+        await db.user.create({
+            data: {
+                id: user.id,
+                email: user.email,
+            },
+        });
+    }
+
+    return { success: true };
+};
+
+export default getAuthStatus; this function will call on auth-callback page-> const { data } = useQuery({
+        queryKey: ["auth-callback"],
+        queryFn: async () => await getAuthStatus(),
+        retry: true,
+        retryDelay: 500,
+    });
+
+    console.log("configId", configId);
+
+    if (data?.success) {
+        if (configId) {
+            localStorage.removeItem("configurationId");
+            router.push(`/configure/preview?id=${configId}`);
+        } else {
+            router.push("/");
+        }
+    };
+but tell me you given above the verification and login functions on those pages but how do i redirect the user just after log in to this auth-callback page then things.
+To redirect the user to an auth-callback page right after login in Next.js, you can use Clerk's afterSignIn and afterSignUp properties. These properties allow you to specify a URL to redirect users after they complete the sign-in or sign-up process.
+
+Here's how you can do it:
+
+Step 1: Modify Sign-In and Sign-Up Flows
+Update your sign-in and sign-up components to include the redirection to the auth-callback page.
+
+Sign-In Page:
+
+typescript
+// app/sign-in/page.tsx
+'use client';
+import * as React from 'react';
+import { useSignIn } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
+
+export default function SignInPage() {
+  const { isLoaded, signIn, setActive } = useSignIn();
+  const [emailAddress, setEmailAddress] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLoaded) return;
+
+    try {
+      const signInAttempt = await signIn.create({
+        identifier: emailAddress,
+        password,
+        afterSignIn: '/auth-callback', // Redirect to auth-callback page
+      });
+
+      if (signInAttempt.status === 'complete') {
+        await setActive({ session: signInAttempt.createdSessionId });
+        router.push('/auth-callback');
+      } else {
+        console.error(JSON.stringify(signInAttempt, null, 2));
+      }
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2));
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center">
+      <h1 className="text-2xl font-bold">Sign in</h1>
+      <form onSubmit={handleSubmit} className="w-full max-w-sm">
+        <div>
+          <label className="block text-sm font-medium text-gray-700" htmlFor="email">Enter email address</label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            value={emailAddress}
+            onChange={(e) => setEmailAddress(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700" htmlFor="password">Enter password</label>
+          <input
+            id="password"
+            type="password"
+            name="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+        <div className="mt-4">
+          <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-md">Sign in</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+Sign-Up Page:
+
+typescript
+// app/sign-up/page.tsx
+'use client';
+import * as React from 'react';
+import { useSignUp } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
+
+export default function SignUpPage() {
+  const { isLoaded, signUp, setActive } = useSignUp();
+  const [emailAddress, setEmailAddress] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [verifying, setVerifying] = React.useState(false);
+  const [code, setCode] = React.useState('');
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLoaded) return;
+
+    try {
+      await signUp.create({
+        emailAddress,
+        password,
+        afterSignUp: '/auth-callback', // Redirect to auth-callback page
+      });
+
+      await signUp.prepareEmailAddressVerification({
+        strategy: 'email_code',
+      });
+
+      setVerifying(true);
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2));
+    }
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLoaded) return;
+
+    try {
+      const completeSignUp = await signUp.attemptEmailAddressVerification({
+        code,
+      });
+
+      if (completeSignUp.status === 'complete') {
+        await setActive({ session: completeSignUp.createdSessionId });
+        router.push('/auth-callback');
+      } else {
+        console.error(JSON.stringify(completeSignUp, null, 2));
+      }
+    } catch (err: any) {
+      console.error('Error:', JSON.stringify(err, null, 2));
+    }
+  };
+
+  return verifying ? (
+    <div className="flex flex-col items-center">
+      <h1 className="text-2xl font-bold">Verify your email</h1>
+      <form onSubmit={handleVerify} className="w-full max-w-sm">
+        <label className="block text-sm font-medium text-gray-700" htmlFor="code">Enter your verification code</label>
+        <input
+          value={code}
+          id="code"
+          name="code"
+          onChange={(e) => setCode(e.target.value)}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        />
+        <button type="submit" className="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded-md">Verify</button>
+      </form>
+    </div>
+  ) : (
+    <div className="flex flex-col items-center">
+      <h1 className="text-2xl font-bold">Sign up</h1>
+      <form onSubmit={handleSubmit} className="w-full max-w-sm">
+        <div>
+          <label className="block text-sm font-medium text-gray-700" htmlFor="email">Enter email address</label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            value={emailAddress}
+            onChange={(e) => setEmailAddress(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700" htmlFor="password">Enter password</label>
+          <input
+            id="password"
+            type="password"
+            name="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+        <div className="mt-4">
+          <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-md">Next</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+Step 2: Create auth-callback Page
+Now, create the auth-callback page to handle the authentication status and store the user in the database if they don't already exist.
+
+typescript
+// app/auth-callback/page.tsx
+'use client';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useUser, useAuth } from '@clerk/nextjs';
+import prisma from '@/lib/db';
+
+const AuthCallbackPage = () => {
+  const { isLoaded, user } = useUser();
+  const { isSignedIn } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleAuthCallback = async () => {
+      if (!isLoaded || !isSignedIn || !user) return;
+
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          clerkUserId: user.id,
+        },
+      });
+
+      if (!existingUser) {
+        await prisma.user.create({
+          data: {
+            clerkUserId: user.id,
+            email: user.primaryEmailAddress!.emailAddress,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            profileImageUrl: user.profileImageUrl,
+          },
+        });
+      }
+
+      router.push('/'); // Redirect to home or wherever you need
+    };
+
+    handleAuthCallback();
+  }, [isLoaded, isSignedIn, user, router]);
+
+  return <div>Loading...</div>;
+};
+
+export default AuthCallbackPage;
+Environment Variables
+Ensure you have the necessary environment variables set up in your .env file:
+
+DATABASE_URL="your-mongodb-connection-string"
+This setup will redirect the user to the auth-callback page after they sign in or sign up, check if the user already exists in your MongoDB database, and if not, create a new user. After this, it will redirect the user to the desired page.
+
+can you tell me how to make skeleton (shimmer) loader using css of two different gray colors from left to right till !isLoaded prop
+Sure! Here's how you can create a skeleton (shimmer) loader using CSS with two different gray colors. This loader will have a shimmering effect from left to right and will be shown until the !isLoaded prop becomes true.
+
+CSS for Skeleton Loader
+First, create the CSS for the skeleton loader. You can include this in your global CSS file or as a CSS module.
+
+css
+/* styles.css or skeleton.module.css */
+.skeleton {
+  display: inline-block;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+Implementing the Skeleton Loader in a Component
+You can now use this CSS class in your React component. Here's an example of how to implement it:
+
+typescript
+// SkeletonLoader.tsx
+import React from 'react';
+import styles from './skeleton.module.css';
+
+const SkeletonLoader = ({ width, height }: { width: string; height: string }) => {
+  return (
+    <div className={styles.skeleton} style={{ width, height }}>
+    </div>
+  );
+};
+
+export default SkeletonLoader;
+Conditional Rendering with isLoaded Prop
+Use the SkeletonLoader in your component and conditionally render it based on the isLoaded prop.
+
+typescript
+// SomeComponent.tsx
+import React, { useState, useEffect } from 'react';
+import SkeletonLoader from './SkeletonLoader';
+
+const SomeComponent = () => {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    // Simulate loading
+    const timer = setTimeout(() => setIsLoaded(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="container">
+      {!isLoaded ? (
+        <SkeletonLoader width="100%" height="20px" />
+      ) : (
+        <div>Your content goes here</div>
+      )}
+    </div>
+  );
+};
+
+export default SomeComponent;
+Putting It All Together
+Create the CSS file: styles.css or skeleton.module.css
+css
+/* skeleton.module.css */
+.skeleton {
+  display: inline-block;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+Create the Skeleton Loader component: SkeletonLoader.tsx
+typescript
+// SkeletonLoader.tsx
+import React from 'react';
+import styles from './skeleton.module.css';
+
+const SkeletonLoader = ({ width, height }: { width: string; height: string }) => {
+  return (
+    <div className={styles.skeleton} style={{ width, height }}>
+    </div>
+  );
+};
+
+export default SkeletonLoader;
+Use the Skeleton Loader in another component: SomeComponent.tsx
+typescript
+// SomeComponent.tsx
+import React, { useState, useEffect } from 'react';
+import SkeletonLoader from './SkeletonLoader';
+
+const SomeComponent = () => {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    // Simulate loading
+    const timer = setTimeout(() => setIsLoaded(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="container">
+      {!isLoaded ? (
+        <SkeletonLoader width="100%" height="20px" />
+      ) : (
+        <div>Your content goes here</div>
+      )}
+    </div>
+  );
+};
+
+export default SomeComponent;
+This setup will show a shimmering gray skeleton loader until the isLoaded prop becomes true. Adjust the width and height of the SkeletonLoader component as needed to fit your UI.
+
+const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!isLoaded) return;
+
+        if (!emailAddress || !password) {
+            return toast.warning("Please fill in all fields");
+        }
+
+        try {
+            const signInAttempt = await signIn.create({
+                identifier: emailAddress,
+                password,
+                actionCompleteRedirectUrl: "/auth-callback"
+            });
+
+            if (signInAttempt.status === 'complete') {
+                await setActive({ session: signInAttempt.createdSessionId });
+                router.push('/auth-callback');
+            } else {
+                console.error(JSON.stringify(signInAttempt, null, 2));
+                toast.error("Invalid email or password");
+            }
+        } catch (err: any) {
+            console.error(JSON.stringify(err, null, 2));
+            toast.error("An error occurred. Please try again");
+        }
+    };see here instead of general toast message at last can you make a switch case statements by checking the error.erros.code or something other and show specific toast messages to users 
+To enhance the error handling in your handleSubmit function and display specific toast messages based on the error codes, you can use a switch statement to handle different error cases. Here's an updated version of your handleSubmit function:
+
+typescript
+import { SignInError } from '@clerk/nextjs';
+import { toast } from 'react-toastify';
+import { useRouter } from 'next/router';
+import { useSignIn, useUser } from '@clerk/nextjs';
+
+// Assuming you are importing the necessary hooks and libraries as above
+
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLoaded) return;
+
+    if (!emailAddress || !password) {
+        return toast.warning("Please fill in all fields");
+    }
+
+    try {
+        const signInAttempt = await signIn.create({
+            identifier: emailAddress,
+            password,
+            actionCompleteRedirectUrl: "/auth-callback"
+        });
+
+        if (signInAttempt.status === 'complete') {
+            await setActive({ session: signInAttempt.createdSessionId });
+            router.push('/auth-callback');
+        } else {
+            console.error(JSON.stringify(signInAttempt, null, 2));
+            toast.error("Invalid email or password");
+        }
+    } catch (err: SignInError | any) {
+        console.error(JSON.stringify(err, null, 2));
+
+        switch (err.errors[0]?.code) {
+            case 'identifier-already-exists':
+                toast.error("This email is already registered. Please use a different email.");
+                break;
+            case 'incorrect-password':
+                toast.error("Incorrect password. Please try again.");
+                break;
+            case 'too-many-attempts':
+                toast.error("Too many attempts. Please try again later.");
+                break;
+            case 'network-error':
+                toast.error("Network error. Please check your connection and try again.");
+                break;
+            default:
+                toast.error("An error occurred. Please try again");
+                break;
+        }
+    }
+};
+Explanation:
+Import Necessary Hooks and Libraries: Make sure you import SignInError from @clerk/nextjs and any other hooks or libraries required.
+Error Handling with switch Statement:
+Default Case: For any unexpected errors, a general error message is shown.
+Specific Error Codes: Display specific error messages for different error codes using a switch statement.
+Error Codes:
+identifier-already-exists: An error code for when the email is already registered.
+incorrect-password: An error code for when the password is incorrect.
+too-many-attempts: An error code for too many attempts.
+network-error: An error code for network-related issues.
+You can adjust the error codes and messages based on the actual error codes that Clerk provides and the specific needs of your application.
