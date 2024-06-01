@@ -4,8 +4,7 @@ This is Next.js 14 with Clerk authentication system with custom UI using Shadcn 
 
 ### 1. Install dependencies:
 
-```
-bash
+```bash
 npm install
 # or
 yarn install
@@ -25,8 +24,7 @@ bun install
 
 ### 3. Run the development server:
 
-```
-bash
+```bash
 npm run dev
 # or
 yarn dev
