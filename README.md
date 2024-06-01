@@ -14,7 +14,7 @@ pnpm install
 bun install
 ```
 
-### 3. Add env variables
+### 2. Add env variables
 
   Grab your env variables from:
 
