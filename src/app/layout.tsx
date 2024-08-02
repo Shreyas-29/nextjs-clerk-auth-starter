@@ -21,10 +21,12 @@ export default function RootLayout({
     return (
         <Providers>
             <html lang="en">
-                <body className={cn(
-                    "min-h-screen antialiased bg-background text-foreground",
-                    font.className,
-                )}>
+                <body
+                    className={cn(
+                        "min-h-screen antialiased bg-background text-foreground",
+                        font.className,
+                    )}
+                >
                     <Toaster richColors theme="light" />
                     <Navbar />
                     {children}
