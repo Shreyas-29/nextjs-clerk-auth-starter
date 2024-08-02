@@ -1,16 +1,16 @@
-import type { Metadata } from "next";
-import { DM_Sans, Inter } from "next/font/google";
-import "./globals.css";
-import { cn } from "@/lib/utils";
 import Navbar from "@/components/navbar";
 import Providers from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
 
-const font = DM_Sans({ subsets: ["latin"] });
+const font = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "Astra",
-    description: "Astra is a Next.js auth starter kit with Clerk, Prisma, and Vercel.",
+    title: "Next.js + Clerk",
+    description: "A Next.js template with Clerk authentication.",
 };
 
 export default function RootLayout({
@@ -32,4 +32,4 @@ export default function RootLayout({
             </html>
         </Providers>
     );
-}
+};

@@ -10,7 +10,7 @@ const Home = async () => {
     return (
         <div className="flex flex-col items-center justify-center w-full max-w-xl mx-auto hc h-full">
             <h1 className="text-center w-full text-2xl font-semibold">
-                Welcome to the Astra Starter Kit!
+                Welcome to the Next.js + Clerk Starter Kit!
             </h1>
             <p className="text-muted-foreground text-balance text-center mt-4">
                 {user ? `Great to see you again, ${user.emailAddresses?.[0]?.emailAddress}!` : "Please sign in to continue."}

@@ -1,20 +1,24 @@
 'use client';
 
-import * as React from 'react';
+import React, { useState } from 'react';
 import { useSignIn } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, LoaderIcon } from "lucide-react";
 import Link from "next/link";
 
 export default function SignInPage() {
-    const { isLoaded, signIn, setActive } = useSignIn();
-    const [emailAddress, setEmailAddress] = React.useState('');
-    const [password, setPassword] = React.useState('');
-    const [showPassword, setShowPassword] = React.useState(false);
+    
     const router = useRouter();
+
+    const { isLoaded, signIn, setActive } = useSignIn();
+
+    const [emailAddress, setEmailAddress] = useState('');
+    const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,6 +27,8 @@ export default function SignInPage() {
         if (!emailAddress || !password) {
             return toast.warning("Please fill in all fields");
         }
+
+        setIsLoading(true);
 
         try {
             const signInAttempt = await signIn.create({
@@ -54,6 +60,8 @@ export default function SignInPage() {
                     toast.error("An error occurred. Please try again");
                     break;
             }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -85,12 +93,14 @@ export default function SignInPage() {
                             name="password"
                             placeholder="Enter password"
                             value={password}
+                            disabled={isLoading}
                             onChange={(e) => setPassword(e.target.value)}
                         />
                         <Button
                             type="button"
                             size="icon"
                             variant="ghost"
+                            disabled={isLoading}
                             className="absolute top-1 right-1"
                             onClick={() => setShowPassword(!showPassword)}
                         >
@@ -102,8 +112,10 @@ export default function SignInPage() {
                     </div>
                 </div>
                 <div className="mt-4">
-                    <Button size="sm" type="submit" className="w-full">
-                        Sign In
+                    <Button size="lg" type="submit" disabled={isLoading} className="w-full">
+                        {isLoading ? (
+                            <LoaderIcon className="w-4 h-4 animate-spin" />
+                        ) :"Sign In"}
                     </Button>
                 </div>
                 <div className="mt-4 flex">

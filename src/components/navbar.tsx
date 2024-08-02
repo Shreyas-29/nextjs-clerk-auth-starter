@@ -14,7 +14,7 @@ const Navbar = () => {
         <header className="sticky top-0 inset-x-0 bg-white/50 backdrop-blur-md h-14 w-full border-b border-border px-4 md:px-10">
             <div className="flex items-center justify-between mx-auto max-w-screen-xl h-full">
                 <Link href="/" className="font-semibold">
-                    Astra
+                    Next.js + Clerk
                 </Link>
                 <div className="flex items-center justify-end">
                     {isLoaded ? (
