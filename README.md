@@ -1,45 +1,77 @@
-This is Next.js 14 with Clerk authentication system with custom UI using Shadcn UI and Tailwind CSS
+<h1 align="start">
+  Next.js Clerk Authentication Starter
+</h1>
 
-## Getting Started
+<img width="1280" alt="Next.js Authentication Thumbnail" src="https://github.com/user-attachments/assets/fe828deb-7cef-4712-ba8a-74ce1d1d4c18">
 
-### 1. Install dependencies:
+## 📚 Introduction
 
-```bash
-npm install
-# or
-yarn install
-# or
-pnpm install
-# or
-bun install
-```
+In this project, we build a full-stack authentication system using Next.js, Clerk, Shadcn UI, Prisma, and MongoDB. This setup includes user authentication, secure login, and registration processes, making it perfect for modern web applications.
 
-### 2. Add env variables
+## 🎥 Watch Tutorial on YouTube
 
-  Grab your env variables from:
+Check out the tutorial to see how this authentication system was built: [Watch the Tutorial](https://www.youtube.com/watch?v=4ntGgYG_t0U) 💻
 
-- [Clerk Dashboard](https://dashboard.clerk.com/)
-- [MongoDB](https://cloud.mongodb.com/)
+## 🛠️ Tech Stack
+
+- **Next.js**: Framework for building server-rendered React applications.
+- **Clerk**: For secure user authentication and management.
+- **Shadcn UI**: For building seamless UI.
+- **Prisma**: ORM for managing database interactions.
+- **MongoDB Atlas**: Cloud-based MongoDB for storing user data.
+
+## 🚀 Quick Start
+
+### Prerequisites
+Ensure you have the following installed:
+- Node.js
+- Git
+- npm / yarn / pnpm
+
+1. Clone this repository:
+
+   ```bash
+   git clone https://github.com/Shreyas-29/nextjs-clerk-auth-starter.git
+   cd nextjs-clerk-auth-starter
+   ```
+2. Install dependencies:
+   ```bash
+    npm install
+   ```
+3. Set up environment variables:
+   ```bash
+    # database
+    DATABASE_URL=
+    
+    # clerk
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+    CLERK_SECRET_KEY=
+    NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+    NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+    NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_URL=/
+    NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_URL=/
+   ```
+4. Setup the Prisma:
+   ```bash
+   npx prisma init
+   npx prisma generate
+   npx prisma db push 
+   ```
+5. Start the development server:
+   ```bash
+    npm run dev
+   ```
+6.	Open your browser and navigate to http://localhost:3000 to see the app in action.
+
+📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 
-### 3. Run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-You can check out [Shreyas](https://github.com/Shreyas-29?tab=repositories) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   
