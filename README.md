@@ -18,7 +18,7 @@ Check out the tutorial to see how this authentication system was built: [Watch t
 - **Clerk**: For secure user authentication and management.
 - **Shadcn UI**: For building seamless UI.
 - **Prisma**: ORM for managing database interactions.
-- **MongoDB Atlas**: Cloud-based MongoDB for storing user data.
+- **MongoDB**: Cloud-based MongoDB for storing user data.
 
 ## 🚀 Quick Start
 
