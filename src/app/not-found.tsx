@@ -4,10 +4,10 @@ const ErrorPage = () => {
     return (
         <div className="flex items-center justify-center hc w-full">
             <h4 className="text-center text-lg font-medium">
-                It seems you&apos;ve hit a page that doesn&apos;t exist. Please try again later.
+                The page you are looking for does not exist.
             </h4>
         </div>
     )
-}
+};
 
 export default ErrorPage

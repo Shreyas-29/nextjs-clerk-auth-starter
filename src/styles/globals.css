@@ -101,7 +101,6 @@
   }
 }
 
-/* skeleton.module.css */
 .skeleton {
   display: inline-block;
   background: linear-gradient(90deg, #d4d4d4 25%, #e5e5e5 50%, #d4d4d4 75%);
@@ -117,14 +116,6 @@
   100% {
     background-position: 200% 0;
   }
-}
-
-.c {
-  @apply to-neutral-200
-}
-
-canvas {
-  color: hsl(0, 0%, 90%);
 }
 
 .bt::before {
